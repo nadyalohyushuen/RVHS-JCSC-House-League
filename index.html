@@ -462,8 +462,45 @@ function editHero(id){const x=adminData.heroes.find(v=>v.id===id); if(!x) return
 async function toggleHero(id){const x=adminData.heroes.find(v=>v.id===id); if(!x) return; await api({action:'saveHero',passcode:staffPasscode,id:x.id,name:x.name,heroClass:x.heroClass,detail:x.detail,imageUrl:x.imageUrl,published:!x.published}); await afterAdminSave();}
 async function deleteHero(id){if(!confirm('Delete this hero?')) return; await api({action:'deleteHero',passcode:staffPasscode,id}); await afterAdminSave();}
 function clearEventForm(){$('#eventId').value=''; $('#eventTitle').value=''; $('#eventDate').value=''; $('#eventTime').value=''; $('#eventLocation').value=''; $('#eventCategory').value=''; $('#eventPointsLabel').value=''; $('#eventDescription').value=''; $('#eventImageUrl').value=''; $('#eventPhoto').value=''; $('#eventPublished').checked=true;}
-function editEvent(id){const x=adminData.events.find(v=>v.id===id); if(!x) return; $('#eventId').value=x.id; $('#eventTitle').value=x.title||''; $('#eventDate').value=(x.date||'').slice(0,10); $('#eventTime').value=x.time||''; $('#eventLocation').value=x.location||''; $('#eventCategory').value=x.category||''; $('#eventPointsLabel').value=x.pointsLabel||''; $('#eventDescription').value=x.description||''; $('#eventImageUrl').value=x.imageUrl||''; $('#eventPublished').checked=!!x.published; activateTab('eventsPane');}
-async function toggleEvent(id){const x=adminData.events.find(v=>v.id===id); if(!x) return; await api({action:'saveEvent',passcode:staffPasscode,id:x.id,title:x.title,date:x.date,time:x.time,location:x.location,category:x.category,pointsLabel:x.pointsLabel,description:x.description,imageUrl:x.imageUrl,published:!x.published}); await afterAdminSave();}
+function editEvent(id){
+  const x=adminData.events.find(v=>String(v.id)===String(id));
+  if(!x){ alert('This event could not be found. Refresh the dashboard and try again.'); return; }
+  $('#eventId').value=x.id||'';
+  $('#eventTitle').value=x.title||'';
+  $('#eventDate').value=(x.date||'').slice(0,10);
+  $('#eventTime').value=x.time||'';
+  $('#eventLocation').value=x.location||'';
+  $('#eventCategory').value=x.category||'';
+  $('#eventPointsLabel').value=x.pointsLabel||'';
+  $('#eventDescription').value=x.description||'';
+  $('#eventImageUrl').value=x.imageUrl||'';
+  $('#eventPhoto').value='';
+  $('#eventPublished').checked=Boolean(x.published);
+  activateTab('eventsPane');
+  $('#eventForm').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#eventTitle').focus();
+  $('#eventMessage').textContent='Editing existing event. Make your changes and click Save event.';
+  $('#eventMessage').className='form-message success';
+}
+async function toggleEvent(id){
+  const x=adminData.events.find(v=>String(v.id)===String(id));
+  if(!x){ alert('This event could not be found. Refresh the dashboard and try again.'); return; }
+  const nextPublished=!Boolean(x.published);
+  const msg=$('#eventMessage');
+  try{
+    msg.textContent=nextPublished?'Publishing event…':'Hiding event…';
+    msg.className='form-message';
+    await api({action:'saveEvent',passcode:staffPasscode,id:x.id,title:x.title,date:x.date,time:x.time||'',location:x.location||'',category:x.category||'',pointsLabel:x.pointsLabel||'',description:x.description,imageUrl:x.imageUrl||'',published:nextPublished});
+    await afterAdminSave();
+    msg.textContent=nextPublished?'Event published successfully.':'Event hidden successfully.';
+    msg.className='form-message success';
+  }catch(err){
+    console.error(err);
+    msg.textContent=err.message||'Unable to update publication status.';
+    msg.className='form-message error';
+    alert(msg.textContent);
+  }
+}
 async function deleteEvent(id){if(!confirm('Delete this event?')) return; await api({action:'deleteEvent',passcode:staffPasscode,id}); await afterAdminSave();}
 async function approveNomination(id){await api({action:'approveNomination',passcode:staffPasscode,id}); await afterAdminSave();}
 async function rejectNomination(id){await api({action:'rejectNomination',passcode:staffPasscode,id}); await afterAdminSave();}
