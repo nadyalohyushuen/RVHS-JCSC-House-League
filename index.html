@@ -107,6 +107,11 @@
     .event-card img{display:block;width:100%;height:auto;aspect-ratio:9 / 16;object-fit:cover;object-position:center;border-radius:16px;margin:8px 0 14px;background:#e7ebf2}
     .event-card h3{margin:0 0 6px}
     .event-card p{color:var(--muted);line-height:1.55;font-size:.9rem;margin:0 0 12px}
+    .event-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+    .event-link{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;text-decoration:none;font-weight:800;font-size:.82rem;border:1px solid var(--ink);color:var(--ink);background:#fff}
+    .event-link.primary{background:var(--ink);color:#fff}
+    .instagram-link{display:inline-flex;align-items:center;gap:9px;color:var(--ink);font-weight:800;text-decoration:none}
+    .instagram-link svg{width:24px;height:24px;flex:none}
     .media-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(145deg,#14213d,#2b3148);color:white}
     .media-panel p{color:rgba(255,255,255,.78);line-height:1.7}
     .media-panel a{display:inline-flex;align-items:center;gap:8px;padding:13px 18px;border-radius:14px;background:var(--gold);color:#182038;font-weight:900;text-decoration:none;white-space:nowrap}
@@ -268,6 +273,10 @@
 
   <footer>
     <p>River Valley High School House League</p>
+    <a class="instagram-link" href="https://www.instagram.com/the_rvibe/" target="_blank" rel="noopener noreferrer" aria-label="Visit The RVibe on Instagram">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>
+      <span>@the_rvibe</span>
+    </a>
     <p id="connectionStatus">Connecting to live data…</p>
   </footer>
 </div>
@@ -353,7 +362,8 @@
         <input id="eventId" type="hidden">
         <div class="admin-grid-3">
           <label>Event title<input id="eventTitle" required></label>
-          <label>Date<input id="eventDate" type="date" required></label>
+          <label>Start date<input id="eventStartDate" type="date" required></label>
+          <label>End date (optional)<input id="eventEndDate" type="date"></label>
           <label>Time<input id="eventTime" placeholder="e.g. 3.00 pm – 5.00 pm"></label>
           <label>Location<input id="eventLocation" placeholder="e.g. Sports Hall"></label>
           <label>Category<input id="eventCategory" placeholder="Sports, Arts, Service..."></label>
@@ -362,6 +372,10 @@
         <label>Description<textarea id="eventDescription" required></textarea></label>
         <label>Upload event image (optional)<input id="eventPhoto" type="file" accept="image/*"></label>
         <label>Or image URL (optional)<input id="eventImageUrl" placeholder="https://..."></label>
+        <div class="admin-grid">
+          <label>Sign-up link (optional)<input id="eventSignupLink" type="url" placeholder="https://..."></label>
+          <label>Find out more link (optional)<input id="eventMoreInfoLink" type="url" placeholder="https://..."></label>
+        </div>
         <label><input id="eventPublished" type="checkbox" checked style="width:auto"> Published</label>
         <div id="eventMessage" class="form-message"></div>
         <div class="dialog-actions"><button type="button" id="eventResetBtn" class="secondary-btn">Clear</button><button type="submit" class="primary-btn">Save event</button></div>
@@ -434,7 +448,30 @@ async function loadDashboard(){if(!SCRIPT_URL||SCRIPT_URL.includes('PASTE_YOUR')
 function renderDashboard(data,live){cachedData=data; renderHouses(data.houses||[]); renderHeroes(data.heroes||[]); renderEvents(data.events||[]); renderMedia(data.media||{}); renderCheers(data.cheers||{}); updateCountdown(data.finaleDate); $('#lastUpdated').textContent=`Last updated ${fdate(data.updatedAt,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`; $('#connectionStatus').textContent=live?'Live data connected':'Preview data shown — connect Apps Script for live updates';}
 function renderHouses(houses){const r=[...houses].sort((a,b)=>Number(b.Points??b.points)-Number(a.Points??a.points)); if(!r.length) return; const lead=Number(r[0].Points??r[0].points)-Number((r[1]?.Points??r[1]?.points)||0); $('#leaderBanner').classList.remove('hidden'); $('#leaderBanner').textContent=`${r[0].House||r[0].name} currently leads by ${n(lead)} points.`; $('#houseGrid').innerHTML=r.map((h,i)=>{const name=h.House||h.name; const points=h.Points??h.points; const weekly=h.WeeklyChange??h.weeklyChange??0; const info=HOUSE_INFO[name]||{mascot:'★',motto:'House spirit'}; const gap=i===0?lead:Number(r[i-1].Points??r[i-1].points)-Number(points); return `<article class="house-card" data-house="${esc(name)}"><span class="rank-chip">${i===0?'🏆':'Rank'} ${i+1}</span><div class="mascot">${info.mascot}</div><h3>${esc(name)}</h3><p class="house-motto">${esc(info.motto)}</p><div class="score"><strong>${n(points)}</strong><span>points</span></div><div class="house-meta"><span>${Number(weekly)>=0?'+':''}${n(weekly)} this term</span><span>${i===0?`${n(lead)} ahead`:`${n(gap)} to next rank`}</span></div></article>`;}).join('');}
 function renderHeroes(items){$('#heroesGrid').innerHTML=items.map(x=>`<article class="hero-card">${x.imageUrl?`<img src="${esc(x.imageUrl)}" alt="${esc(x.name)}">`:'<div style="height:220px;background:#e7ebf2"></div>'}<div class="hero-card-body"><h3>${esc(x.name||x.Name)}</h3><small>${esc(x.heroClass||x.HeroClass||'')}</small><p>${esc(x.detail||x.Detail)}</p></div></article>`).join('')||'<div class="panel">No House Heroes have been published yet.</div>';}
-function renderEvents(events){const sorted=[...events].sort((a,b)=>new Date(a.date||a.Date)-new Date(b.date||b.Date)); const visible=allEventsVisible?sorted:sorted.slice(0,3); $('#eventsGrid').innerHTML=visible.map(e=>{const dm=fmtDayMonth(e.date||e.Date); return `<article class="event-card"><div class="event-top"><div class="event-date"><strong>${esc(dm.day)}</strong><span>${esc(dm.month)}</span></div><span class="tag">${esc(e.category||e.Category||'House Event')}</span></div>${(e.imageUrl||e.ImageUrl)?`<img src="${esc(e.imageUrl||e.ImageUrl)}" alt="${esc(e.title||e.Title)}">`:''}<h3>${esc(e.title||e.Title)}</h3><div class="event-meta">${(e.time||e.Time)?`<span>🕒 ${esc(e.time||e.Time)}</span>`:''}${(e.location||e.Location)?`<span>📍 ${esc(e.location||e.Location)}</span>`:''}</div><p>${esc(e.description||e.Description)}</p><span class="tag">${esc(e.pointsLabel||e.PointsLabel||'Points available')}</span></article>`;}).join('')||'<div class="panel">No upcoming events have been published yet.</div>';}
+function eventDateText(startDate,endDate){
+  if(!startDate) return '';
+  const start=new Date(startDate+'T00:00:00');
+  if(!endDate || endDate===startDate) return start.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
+  const end=new Date(endDate+'T00:00:00');
+  const sameYear=start.getFullYear()===end.getFullYear();
+  const sameMonth=sameYear && start.getMonth()===end.getMonth();
+  if(sameMonth) return `${start.getDate()}–${end.getDate()} ${end.toLocaleDateString('en-SG',{month:'short',year:'numeric'})}`;
+  if(sameYear) return `${start.toLocaleDateString('en-SG',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
+  return `${start.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})} – ${end.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'})}`;
+}
+function renderEvents(events){
+  const sorted=[...events].sort((a,b)=>new Date(a.startDate||a.date||a.StartDate||a.Date)-new Date(b.startDate||b.date||b.StartDate||b.Date));
+  const visible=allEventsVisible?sorted:sorted.slice(0,3);
+  $('#eventsGrid').innerHTML=visible.map(e=>{
+    const startDate=e.startDate||e.date||e.StartDate||e.Date||'';
+    const endDate=e.endDate||e.EndDate||'';
+    const dm=fmtDayMonth(startDate);
+    const signup=e.signupLink||e.SignupLink||'';
+    const more=e.moreInfoLink||e.MoreInfoLink||'';
+    const buttons=(signup||more)?`<div class="event-actions">${signup?`<a class="event-link primary" href="${esc(signup)}" target="_blank" rel="noopener noreferrer">Sign-up Here</a>`:''}${more?`<a class="event-link" href="${esc(more)}" target="_blank" rel="noopener noreferrer">Find out more</a>`:''}</div>`:'';
+    return `<article class="event-card"><div class="event-top"><div class="event-date"><strong>${esc(dm.day)}</strong><span>${esc(dm.month)}</span></div><span class="tag">${esc(e.category||e.Category||'House Event')}</span></div>${(e.imageUrl||e.ImageUrl)?`<img src="${esc(e.imageUrl||e.ImageUrl)}" alt="${esc(e.title||e.Title)}">`:''}<h3>${esc(e.title||e.Title)}</h3><div class="event-meta"><span>📅 ${esc(eventDateText(startDate,endDate))}</span>${(e.time||e.Time)?`<span>🕒 ${esc(e.time||e.Time)}</span>`:''}${(e.location||e.Location)?`<span>📍 ${esc(e.location||e.Location)}</span>`:''}</div><p>${esc(e.description||e.Description)}</p><span class="tag">${esc(e.pointsLabel||e.PointsLabel||'Points available')}</span>${buttons}</article>`;
+  }).join('')||'<div class="panel">No upcoming events have been published yet.</div>';
+}
 function renderMedia(media){$('#mediaHeading').textContent=media.heading||'Media Highlights'; $('#mediaDescription').textContent=media.description||'Photos from house events and memorable moments will be collected here.'; const a=$('#mediaLink'); a.href=media.link||'#'; a.textContent=(media.link&&media.link!=='#')?'Open photo gallery →':'Photo gallery link coming soon'; if(!media.link||media.link==='#') a.removeAttribute('target'); else a.setAttribute('target','_blank');}
 
 function renderCheers(cheers){
@@ -445,7 +482,7 @@ function updateCountdown(date){const target=new Date(date); if(isNaN(target)) re
 async function loadAdminData(){const out=await api({action:'getAdminData',passcode:staffPasscode}); adminData=out.data; renderAdminLists(); fillMediaForm(); fillCheersForm();}
 function renderAdminLists(){renderHeroesAdmin(); renderEventsAdmin(); renderNominationsAdmin();}
 function renderHeroesAdmin(){$('#heroesAdminList').innerHTML=(adminData.heroes||[]).map(x=>`<div class="admin-item item-with-thumb">${x.imageUrl?`<img class="thumb" src="${esc(x.imageUrl)}" alt="">`:'<div class="thumb"></div>'}<div><div class="admin-item-head"><div><h4>${esc(x.name)}</h4><p>${esc(x.heroClass||'')} · <span class="badge">${x.published?'Published':'Hidden'}</span></p></div></div><p>${esc(x.detail)}</p><div class="admin-item-actions"><button class="mini-btn" data-edit-hero="${esc(x.id)}">Edit</button><button class="mini-btn" data-toggle-hero="${esc(x.id)}">${x.published?'Hide':'Publish'}</button><button class="mini-btn danger" data-delete-hero="${esc(x.id)}">Delete</button></div></div></div>`).join('')||'<p>No heroes yet.</p>'; attachAdminListHandlers();}
-function renderEventsAdmin(){$('#eventsAdminList').innerHTML=(adminData.events||[]).map(x=>`<div class="admin-item item-with-thumb">${x.imageUrl?`<img class="thumb" src="${esc(x.imageUrl)}" alt="">`:'<div class="thumb"></div>'}<div><div class="admin-item-head"><div><h4>${esc(x.title)}</h4><p>${esc(fdate(x.date,{day:'numeric',month:'short',year:'numeric'}))}${x.time?` · ${esc(x.time)}`:''}${x.location?` · ${esc(x.location)}`:''} · <span class="badge">${x.published?'Published':'Hidden'}</span></p></div></div><p>${esc(x.description)}</p><div class="admin-item-actions"><button class="mini-btn" data-edit-event="${esc(x.id)}">Edit</button><button class="mini-btn" data-toggle-event="${esc(x.id)}">${x.published?'Hide':'Publish'}</button><button class="mini-btn danger" data-delete-event="${esc(x.id)}">Delete</button></div></div></div>`).join('')||'<p>No events yet.</p>'; attachAdminListHandlers();}
+function renderEventsAdmin(){$('#eventsAdminList').innerHTML=(adminData.events||[]).map(x=>`<div class="admin-item item-with-thumb">${x.imageUrl?`<img class="thumb" src="${esc(x.imageUrl)}" alt="">`:'<div class="thumb"></div>'}<div><div class="admin-item-head"><div><h4>${esc(x.title)}</h4><p>${esc(eventDateText(x.startDate||x.date,x.endDate||''))}${x.time?` · ${esc(x.time)}`:''}${x.location?` · ${esc(x.location)}`:''} · <span class="badge">${x.published?'Published':'Hidden'}</span></p></div></div><p>${esc(x.description)}</p><div class="admin-item-actions"><button class="mini-btn" data-edit-event="${esc(x.id)}">Edit</button><button class="mini-btn" data-toggle-event="${esc(x.id)}">${x.published?'Hide':'Publish'}</button><button class="mini-btn danger" data-delete-event="${esc(x.id)}">Delete</button></div></div></div>`).join('')||'<p>No events yet.</p>'; attachAdminListHandlers();}
 function renderNominationsAdmin(){$('#nominationsAdminList').innerHTML=(adminData.nominations||[]).map(x=>`<div class="admin-item item-with-thumb">${x.photoUrl?`<img class="thumb" src="${esc(x.photoUrl)}" alt="">`:'<div class="thumb"></div>'}<div><div class="admin-item-head"><div><h4>${esc(x.heroName)} <span class="badge">${esc(x.heroHouse||'')}</span></h4><p>Nominated by ${esc(x.studentName)} (${esc(x.studentClass)}) · Nominee class: ${esc(x.heroClass)} · Status: ${esc(x.status)}</p></div></div><p>${esc(x.detail)}</p><div class="admin-item-actions">${x.status==='Pending'?`<button class="mini-btn ok" data-approve-nomination="${esc(x.id)}">Approve & Publish</button><button class="mini-btn danger" data-reject-nomination="${esc(x.id)}">Reject</button>`:''}</div></div></div>`).join('')||'<p>No nominations yet.</p>'; attachAdminListHandlers();}
 function attachAdminListHandlers(){$$('[data-edit-hero]').forEach(btn=>btn.onclick=()=>editHero(btn.dataset.editHero)); $$('[data-toggle-hero]').forEach(btn=>btn.onclick=()=>toggleHero(btn.dataset.toggleHero)); $$('[data-delete-hero]').forEach(btn=>btn.onclick=()=>deleteHero(btn.dataset.deleteHero)); $$('[data-edit-event]').forEach(btn=>btn.onclick=()=>editEvent(btn.dataset.editEvent)); $$('[data-toggle-event]').forEach(btn=>btn.onclick=()=>toggleEvent(btn.dataset.toggleEvent)); $$('[data-delete-event]').forEach(btn=>btn.onclick=()=>deleteEvent(btn.dataset.deleteEvent)); $$('[data-approve-nomination]').forEach(btn=>btn.onclick=()=>approveNomination(btn.dataset.approveNomination)); $$('[data-reject-nomination]').forEach(btn=>btn.onclick=()=>rejectNomination(btn.dataset.rejectNomination));}
 function fillMediaForm(){$('#mediaTitleInput').value=adminData.media?.heading||'Media Highlights'; $('#mediaDescriptionInput').value=adminData.media?.description||''; $('#mediaDriveLinkInput').value=adminData.media?.link||'';}
@@ -461,19 +498,22 @@ function clearHeroForm(){$('#heroId').value=''; $('#heroName').value=''; $('#her
 function editHero(id){const x=adminData.heroes.find(v=>v.id===id); if(!x) return; $('#heroId').value=x.id; $('#heroName').value=x.name||''; $('#heroClass').value=x.heroClass||''; $('#heroDetail').value=x.detail||''; $('#heroImageUrl').value=x.imageUrl||''; $('#heroPublished').checked=!!x.published; activateTab('heroesPane');}
 async function toggleHero(id){const x=adminData.heroes.find(v=>v.id===id); if(!x) return; await api({action:'saveHero',passcode:staffPasscode,id:x.id,name:x.name,heroClass:x.heroClass,detail:x.detail,imageUrl:x.imageUrl,published:!x.published}); await afterAdminSave();}
 async function deleteHero(id){if(!confirm('Delete this hero?')) return; await api({action:'deleteHero',passcode:staffPasscode,id}); await afterAdminSave();}
-function clearEventForm(){$('#eventId').value=''; $('#eventTitle').value=''; $('#eventDate').value=''; $('#eventTime').value=''; $('#eventLocation').value=''; $('#eventCategory').value=''; $('#eventPointsLabel').value=''; $('#eventDescription').value=''; $('#eventImageUrl').value=''; $('#eventPhoto').value=''; $('#eventPublished').checked=true;}
+function clearEventForm(){$('#eventId').value=''; $('#eventTitle').value=''; $('#eventStartDate').value=''; $('#eventEndDate').value=''; $('#eventTime').value=''; $('#eventLocation').value=''; $('#eventCategory').value=''; $('#eventPointsLabel').value=''; $('#eventDescription').value=''; $('#eventImageUrl').value=''; $('#eventSignupLink').value=''; $('#eventMoreInfoLink').value=''; $('#eventPhoto').value=''; $('#eventPublished').checked=true;}
 function editEvent(id){
   const x=adminData.events.find(v=>String(v.id)===String(id));
   if(!x){ alert('This event could not be found. Refresh the dashboard and try again.'); return; }
   $('#eventId').value=x.id||'';
   $('#eventTitle').value=x.title||'';
-  $('#eventDate').value=(x.date||'').slice(0,10);
+  $('#eventStartDate').value=(x.startDate||x.date||'').slice(0,10);
+  $('#eventEndDate').value=(x.endDate||'').slice(0,10);
   $('#eventTime').value=x.time||'';
   $('#eventLocation').value=x.location||'';
   $('#eventCategory').value=x.category||'';
   $('#eventPointsLabel').value=x.pointsLabel||'';
   $('#eventDescription').value=x.description||'';
   $('#eventImageUrl').value=x.imageUrl||'';
+  $('#eventSignupLink').value=x.signupLink||'';
+  $('#eventMoreInfoLink').value=x.moreInfoLink||'';
   $('#eventPhoto').value='';
   $('#eventPublished').checked=Boolean(x.published);
   activateTab('eventsPane');
@@ -490,7 +530,7 @@ async function toggleEvent(id){
   try{
     msg.textContent=nextPublished?'Publishing event…':'Hiding event…';
     msg.className='form-message';
-    await api({action:'saveEvent',passcode:staffPasscode,id:x.id,title:x.title,date:x.date,time:x.time||'',location:x.location||'',category:x.category||'',pointsLabel:x.pointsLabel||'',description:x.description,imageUrl:x.imageUrl||'',published:nextPublished});
+    await api({action:'saveEvent',passcode:staffPasscode,id:x.id,title:x.title,startDate:x.startDate||x.date,endDate:x.endDate||'',time:x.time||'',location:x.location||'',category:x.category||'',pointsLabel:x.pointsLabel||'',description:x.description,imageUrl:x.imageUrl||'',signupLink:x.signupLink||'',moreInfoLink:x.moreInfoLink||'',published:nextPublished});
     await afterAdminSave();
     msg.textContent=nextPublished?'Event published successfully.':'Event hidden successfully.';
     msg.className='form-message success';
@@ -519,7 +559,7 @@ $$('.tab-btn').forEach(btn=>btn.onclick=()=>activateTab(btn.dataset.tab));
 $('#pointsForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#pointsMessage'); try{await api({action:'addPoints',passcode:staffPasscode,house:$('#adminHouse').value,points:Number($('#adminPoints').value),reason:$('#adminReason').value.trim(),updatedBy:$('#adminUpdatedBy').value.trim()}); msg.textContent='Score updated successfully.'; msg.className='form-message success'; $('#adminPoints').value=''; $('#adminReason').value=''; await loadDashboard();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
 $('#heroResetBtn').onclick=clearHeroForm; $('#eventResetBtn').onclick=clearEventForm;
 $('#heroForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#heroMessage'); try{const photo=await fileToPayload($('#heroPhoto')); await api({action:'saveHero',passcode:staffPasscode,id:$('#heroId').value.trim(),name:$('#heroName').value.trim(),heroClass:$('#heroClass').value.trim(),detail:$('#heroDetail').value.trim(),imageUrl:$('#heroImageUrl').value.trim(),published:$('#heroPublished').checked,photo}); msg.textContent='Saved.'; msg.className='form-message success'; clearHeroForm(); await afterAdminSave();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
-$('#eventForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#eventMessage'); try{const photo=await fileToPayload($('#eventPhoto')); await api({action:'saveEvent',passcode:staffPasscode,id:$('#eventId').value.trim(),title:$('#eventTitle').value.trim(),date:$('#eventDate').value,time:$('#eventTime').value.trim(),location:$('#eventLocation').value.trim(),category:$('#eventCategory').value.trim(),pointsLabel:$('#eventPointsLabel').value.trim(),description:$('#eventDescription').value.trim(),imageUrl:$('#eventImageUrl').value.trim(),published:$('#eventPublished').checked,photo}); msg.textContent='Saved.'; msg.className='form-message success'; clearEventForm(); await afterAdminSave();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
+$('#eventForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#eventMessage'); try{const photo=await fileToPayload($('#eventPhoto')); await api({action:'saveEvent',passcode:staffPasscode,id:$('#eventId').value.trim(),title:$('#eventTitle').value.trim(),startDate:$('#eventStartDate').value,endDate:$('#eventEndDate').value,time:$('#eventTime').value.trim(),location:$('#eventLocation').value.trim(),category:$('#eventCategory').value.trim(),pointsLabel:$('#eventPointsLabel').value.trim(),description:$('#eventDescription').value.trim(),imageUrl:$('#eventImageUrl').value.trim(),signupLink:$('#eventSignupLink').value.trim(),moreInfoLink:$('#eventMoreInfoLink').value.trim(),published:$('#eventPublished').checked,photo}); msg.textContent='Saved.'; msg.className='form-message success'; clearEventForm(); await afterAdminSave();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
 $('#mediaForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#mediaMessage'); try{await api({action:'saveMedia',passcode:staffPasscode,heading:$('#mediaTitleInput').value.trim(),description:$('#mediaDescriptionInput').value.trim(),link:$('#mediaDriveLinkInput').value.trim()}); msg.textContent='Media settings saved.'; msg.className='form-message success'; await afterAdminSave();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
 
 $('#cheersForm').onsubmit=async e=>{e.preventDefault(); const msg=$('#cheersMessage'); try{await api({action:'saveCheers',passcode:staffPasscode,cheers:{Aletheia:$('#cheerAletheia').value.trim(),Aether:$('#cheerAether').value.trim(),Apollo:$('#cheerApollo').value.trim(),Atlas:$('#cheerAtlas').value.trim(),RV:$('#cheerRV').value.trim()}}); msg.textContent='Cheer links saved.'; msg.className='form-message success'; await afterAdminSave();}catch(err){msg.textContent=err.message; msg.className='form-message error';}};
