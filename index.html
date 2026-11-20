@@ -474,9 +474,22 @@ function renderEvents(events){
 }
 function renderMedia(media){$('#mediaHeading').textContent=media.heading||'Media Highlights'; $('#mediaDescription').textContent=media.description||'Photos from house events and memorable moments will be collected here.'; const a=$('#mediaLink'); a.href=media.link||'#'; a.textContent=(media.link&&media.link!=='#')?'Open photo gallery →':'Photo gallery link coming soon'; if(!media.link||media.link==='#') a.removeAttribute('target'); else a.setAttribute('target','_blank');}
 
+function normalizeExternalUrl(value){
+  let url=String(value||'').trim();
+  if(!url||url==='#') return '';
+  const match=url.match(/https?:\/\/[^\s<>]+/i);
+  if(match) url=match[0];
+  url=url.replace(/^<|>$/g,'').trim();
+  if(/^(docs|drive)\.google\.com\//i.test(url)||/^www\./i.test(url)) url='https://'+url;
+  return /^https?:\/\//i.test(url)?url:'';
+}
 function renderCheers(cheers){
   const items=[['Aletheia','Aletheia Cheer'],['Aether','Aether Cheer'],['Apollo','Apollo Cheer'],['Atlas','Atlas Cheer'],['RV','RV Cheer']];
-  $('#cheersGrid').innerHTML=items.map(([key,label])=>{const link=cheers[key]||'#'; const active=link&&link!=='#'; return `<a class="cheer-card" data-cheer="${key}" href="${active?esc(link):'#'}" ${active?'target="_blank" rel="noopener"':''}><h3>${label}</h3><span>${active?'Open cheer document →':'Link coming soon'}</span></a>`;}).join('');
+  $('#cheersGrid').innerHTML=items.map(([key,label])=>{
+    const link=normalizeExternalUrl(cheers[key]);
+    const active=!!link;
+    return `<a class="cheer-card" data-cheer="${key}" href="${active?esc(link):'#'}" ${active?'target="_blank" rel="noopener noreferrer"':''}><h3>${label}</h3><span>${active?'Open cheer document →':'Link coming soon'}</span></a>`;
+  }).join('');
 }
 function updateCountdown(date){const target=new Date(date); if(isNaN(target)) return; $('#finaleDateLabel').textContent=fdate(date,{day:'numeric',month:'long',year:'numeric'}); const run=()=>{const diff=Math.max(0,target-Date.now()),days=Math.floor(diff/86400000),hours=Math.floor(diff%86400000/3600000),mins=Math.floor(diff%3600000/60000); $('#countdown').innerHTML=`<div><strong>${days}</strong><span>Days</span></div><div><strong>${hours}</strong><span>Hours</span></div><div><strong>${mins}</strong><span>Mins</span></div>`;}; run(); clearInterval(window.ct); window.ct=setInterval(run,60000);}
 async function loadAdminData(){const out=await api({action:'getAdminData',passcode:staffPasscode}); adminData=out.data; renderAdminLists(); fillMediaForm(); fillCheersForm();}
